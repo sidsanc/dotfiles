@@ -51,11 +51,16 @@ if (-not (Get-Module -ListAvailable Terminal-Icons)) {
 
 # --- 2. profile stubs -------------------------------------------------------
 Write-Host '== Profiles'
-$shared = Join-Path $repo 'powershell\profile.ps1'
-$stub = @"
-# Managed by dotfiles ($repo). Edit powershell\profile.ps1 there, not here.
-if (Test-Path '$shared') { . '$shared' } else { Write-Warning 'dotfiles profile not found: $shared' }
-"@
+# The stub is machine-independent ($HOME-relative) on purpose: Documents may be synced
+# by OneDrive, so an absolute path from one PC would break another.
+if ($repo -ne (Join-Path $HOME 'dotfiles')) {
+    Write-Warning "Repo is at $repo but the profile stub expects $HOME\dotfiles. Clone/move it there."
+}
+$stub = @'
+# Managed by dotfiles (~\dotfiles). Edit powershell\profile.ps1 there, not here.
+$dotProfile = Join-Path $HOME 'dotfiles\powershell\profile.ps1'
+if (Test-Path $dotProfile) { . $dotProfile } else { Write-Warning "dotfiles profile not found: $dotProfile" }
+'@
 $docs = [Environment]::GetFolderPath('MyDocuments')
 foreach ($dir in 'PowerShell', 'WindowsPowerShell') {
     $target = Join-Path $docs "$dir\Microsoft.PowerShell_profile.ps1"
